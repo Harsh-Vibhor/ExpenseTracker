@@ -5,6 +5,7 @@ import userRoutes from './routes/user.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import expenseRoutes from './routes/expense.routes.js';
+import categoryRoutes from './routes/category.routes.js';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Basic 404 handler
 app.use((req, res) => {
