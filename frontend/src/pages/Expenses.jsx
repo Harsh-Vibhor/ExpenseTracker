@@ -132,9 +132,9 @@ const Expenses = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     }).format(amount);
   };
 
@@ -452,11 +452,10 @@ const Expenses = () => {
                           <button
                             key={page}
                             onClick={() => goToPage(page)}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              page === currentPage
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === currentPage
                                 ? 'bg-teal-600 text-white'
                                 : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                              }`}
                           >
                             {page}
                           </button>
@@ -511,9 +510,8 @@ const Expenses = () => {
                   id="categoryId"
                   value={formData.categoryId}
                   onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none ${
-                    formErrors.categoryId ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none ${formErrors.categoryId ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   disabled={submitting}
                 >
                   <option value="">Select a category</option>
@@ -540,9 +538,8 @@ const Expenses = () => {
                   min="0"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none ${
-                    formErrors.amount ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none ${formErrors.amount ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="0.00"
                   disabled={submitting}
                 />
@@ -559,9 +556,8 @@ const Expenses = () => {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none ${
-                    formErrors.date ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none ${formErrors.date ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   disabled={submitting}
                 />
                 {formErrors.date && <p className="text-sm text-red-600 mt-1">{formErrors.date}</p>}
