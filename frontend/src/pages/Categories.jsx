@@ -176,9 +176,9 @@ const Categories = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 border border-transparent dark:border-slate-700 p-6 transition-colors duration-200">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Categories</h2>
           <button
             onClick={openAddModal}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
@@ -194,7 +194,7 @@ const Categories = () => {
         )}
 
         {categories.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-500 dark:text-gray-200 py-8">
             No categories found. Add your first category!
           </div>
         ) : (
@@ -203,13 +203,13 @@ const Categories = () => {
               <div
                 key={category.id}
                 onClick={() => openCategoryDetail(category)}
-                className="border border-gray-200 rounded-lg p-4 flex justify-between items-center hover:bg-teal-50 hover:border-teal-300 transition cursor-pointer group"
+                className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 flex justify-between items-center hover:bg-teal-50 dark:hover:bg-slate-700 hover:border-teal-300 dark:hover:border-teal-500 transition cursor-pointer group"
               >
                 <div>
-                  <h3 className="font-semibold text-gray-800 group-hover:text-teal-700 transition">
+                  <h3 className="font-semibold text-gray-800 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-400 transition">
                     {category.name}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 mt-1">
                     Click to view details
                   </p>
                 </div>
@@ -243,7 +243,7 @@ const Categories = () => {
       {/* Add Category Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md border border-transparent dark:border-slate-700 shadow-xl dark:shadow-black/40 transition-colors duration-200">
             <h3 className="text-xl font-bold mb-4">Add New Category</h3>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -305,7 +305,7 @@ const Categories = () => {
       {/* Add Expense Modal */}
       {showExpenseModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl dark:shadow-black/40 border border-transparent dark:border-slate-700 max-w-md w-full transition-colors duration-200">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800">Add Expense</h3>
             </div>

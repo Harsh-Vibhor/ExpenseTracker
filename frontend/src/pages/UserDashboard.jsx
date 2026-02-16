@@ -73,13 +73,13 @@ const UserDashboard = () => {
     return (
       <div className="space-y-6">
         {/* Loading Skeleton */}
-        <div className="bg-white rounded-lg shadow p-6 animate-pulse">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 animate-pulse transition-colors duration-200">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-1/2"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 animate-pulse transition-colors duration-200">
               <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
               <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
               <div className="h-3 bg-gray-200 rounded w-1/3"></div>
@@ -89,7 +89,7 @@ const UserDashboard = () => {
         {/* Chart Skeletons */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 animate-pulse transition-colors duration-200">
               <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
               <div className="h-64 bg-gray-200 rounded"></div>
             </div>
@@ -128,19 +128,19 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       {/* Welcome Card */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Your Dashboard</h2>
-        <p className="text-gray-600">Track and manage your expenses efficiently.</p>
+      <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 transition-colors duration-200">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Welcome to Your Dashboard</h2>
+        <p className="text-gray-600 dark:text-gray-200">Track and manage your expenses efficiently.</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Expense */}
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 hover:shadow-xl transition-all duration-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Total Expense</h3>
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-200">Total Expense</h3>
             <svg
               className="w-8 h-8 text-teal-500"
               fill="none"
@@ -155,14 +155,14 @@ const UserDashboard = () => {
               />
             </svg>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{formatCurrency(dashboardData.totalExpense)}</p>
-          <p className="text-sm text-gray-500 mt-1">All time</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-white">{formatCurrency(dashboardData.totalExpense)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">All time</p>
         </div>
 
         {/* This Month */}
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 hover:shadow-xl transition-all duration-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">This Month</h3>
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-200">This Month</h3>
             <svg
               className="w-8 h-8 text-blue-500"
               fill="none"
@@ -177,14 +177,14 @@ const UserDashboard = () => {
               />
             </svg>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{formatCurrency(dashboardData.monthlyExpense)}</p>
-          <p className="text-sm text-gray-500 mt-1">Current month</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-white">{formatCurrency(dashboardData.monthlyExpense)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">Current month</p>
         </div>
 
         {/* Categories Used */}
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 hover:shadow-xl transition-all duration-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Categories Used</h3>
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-200">Categories Used</h3>
             <svg
               className="w-8 h-8 text-purple-500"
               fill="none"
@@ -199,14 +199,14 @@ const UserDashboard = () => {
               />
             </svg>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{categoriesUsed}</p>
-          <p className="text-sm text-gray-500 mt-1">Active categories</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-white">{categoriesUsed}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">Active categories</p>
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 hover:shadow-xl transition-all duration-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Recent Transactions</h3>
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-200">Recent Transactions</h3>
             <svg
               className="w-8 h-8 text-green-500"
               fill="none"
@@ -221,16 +221,16 @@ const UserDashboard = () => {
               />
             </svg>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{dashboardData.recentExpenses.length}</p>
-          <p className="text-sm text-gray-500 mt-1">Last 5 expenses</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-white">{dashboardData.recentExpenses.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">Last 5 expenses</p>
         </div>
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Expense Trend Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Expense Trend</h3>
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 transition-colors duration-200">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Monthly Expense Trend</h3>
           {monthlyData.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-gray-400">
               <div className="text-center">
@@ -268,7 +268,7 @@ const UserDashboard = () => {
                 <YAxis
                   stroke="#9CA3AF"
                   style={{ fontSize: '12px' }}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `₹${value}`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -277,7 +277,7 @@ const UserDashboard = () => {
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}
-                  formatter={(value) => [`$${value.toFixed(2)}`, 'Expense']}
+                  formatter={(value) => [formatCurrency(value), 'Expense']}
                 />
                 <Area
                   type="monotone"
@@ -293,8 +293,8 @@ const UserDashboard = () => {
         </div>
 
         {/* Category Breakdown Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Breakdown</h3>
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 transition-colors duration-200">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Category Breakdown</h3>
           {dashboardData.categoryBreakdown.filter(cat => cat.total > 0).length === 0 ? (
             <div className="flex items-center justify-center h-64 text-gray-400">
               <div className="text-center">
@@ -356,7 +356,7 @@ const UserDashboard = () => {
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}
-                  formatter={(value) => `$${value.toFixed(2)}`}
+                  formatter={(value) => formatCurrency(value)}
                 />
                 <Legend
                   verticalAlign="bottom"
@@ -364,7 +364,7 @@ const UserDashboard = () => {
                   iconType="circle"
                   formatter={(value) => {
                     const category = dashboardData.categoryBreakdown.find(cat => cat.name === value);
-                    return `${value}: $${category?.total.toFixed(2) || 0}`;
+                    return `${value}: ${formatCurrency(category?.total || 0)}`;
                   }}
                 />
               </PieChart>
@@ -374,9 +374,9 @@ const UserDashboard = () => {
       </div>
 
       {/* Recent Expenses Section */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Recent Expenses</h3>
+      <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 transition-colors duration-200">
+        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Recent Expenses</h3>
         </div>
         <div className="p-6">
           {dashboardData.recentExpenses.length === 0 ? (
@@ -401,28 +401,28 @@ const UserDashboard = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Category</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Description</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
+                  <tr className="border-b border-gray-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Category</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Description</th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Amount</th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dashboardData.recentExpenses.map((expense) => (
-                    <tr key={expense.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={expense.id} className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors duration-150">
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                           {expense.category_name || 'Uncategorized'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
+                      <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">
                         {expense.description || '-'}
                       </td>
-                      <td className="py-3 px-4 text-right text-sm font-semibold text-gray-800">
+                      <td className="py-3 px-4 text-right text-sm font-semibold text-gray-800 dark:text-white">
                         {formatCurrency(expense.amount)}
                       </td>
-                      <td className="py-3 px-4 text-right text-sm text-gray-500">
+                      <td className="py-3 px-4 text-right text-sm text-gray-500 dark:text-gray-200">
                         {formatDate(expense.expense_date)}
                       </td>
                     </tr>

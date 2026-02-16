@@ -212,11 +212,11 @@ const Expenses = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6 animate-pulse">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 animate-pulse transition-colors duration-200">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-10 bg-gray-200 rounded w-32"></div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 animate-pulse">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 p-6 animate-pulse transition-colors duration-200">
           <div className="h-64 bg-gray-200 rounded"></div>
         </div>
       </div>
@@ -234,11 +234,11 @@ const Expenses = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 border border-transparent dark:border-slate-700 p-6 transition-colors duration-200">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Expenses</h2>
-            <p className="text-gray-600 mt-1">Manage your expenses</p>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Expenses</h2>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">Manage your expenses</p>
           </div>
           <button
             onClick={openAddModal}
@@ -253,11 +253,11 @@ const Expenses = () => {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 border border-transparent dark:border-slate-700 p-6 transition-colors duration-200">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Search */}
           <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
               Search
             </label>
             <input
@@ -266,20 +266,20 @@ const Expenses = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search description..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-colors duration-200"
             />
           </div>
 
           {/* Category Filter */}
           <div>
-            <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
               Category
             </label>
             <select
               id="categoryFilter"
               value={filters.categoryId}
               onChange={(e) => handleFilterChange('categoryId', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-colors duration-200"
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -292,7 +292,7 @@ const Expenses = () => {
 
           {/* Date From */}
           <div>
-            <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
               From Date
             </label>
             <input
@@ -300,13 +300,13 @@ const Expenses = () => {
               type="date"
               value={filters.dateFrom}
               onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-colors duration-200"
             />
           </div>
 
           {/* Date To */}
           <div>
-            <label htmlFor="dateTo" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="dateTo" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
               To Date
             </label>
             <input
@@ -314,14 +314,14 @@ const Expenses = () => {
               type="date"
               value={filters.dateTo}
               onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-colors duration-200"
             />
           </div>
         </div>
 
         {/* Filter Actions */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-          <div className="text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+          <div className="text-sm text-gray-600 dark:text-gray-200">
             Showing {paginatedExpenses.length} of {filteredExpenses.length} expenses
             {filteredExpenses.length !== expenses.length && ` (filtered from ${expenses.length} total)`}
           </div>
@@ -335,7 +335,7 @@ const Expenses = () => {
       </div>
 
       {/* Expenses Table */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg dark:shadow-black/30 border border-transparent dark:border-slate-700 transition-colors duration-200">
         <div className="p-6">
           {filteredExpenses.length === 0 ? (
             <div className="text-center py-12">
@@ -352,7 +352,7 @@ const Expenses = () => {
                   d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
               </svg>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 dark:text-gray-200 text-sm">
                 {expenses.length === 0 ? 'No expenses yet' : 'No expenses match your filters'}
               </p>
               <p className="text-gray-400 text-xs mt-1">
@@ -365,25 +365,25 @@ const Expenses = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Category</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Description</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
+                  <tr className="border-b border-gray-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Date</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Category</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Description</th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Amount</th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-white">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedExpenses.map((expense) => (
-                    <tr key={expense.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-700">{formatDate(expense.date)}</td>
+                    <tr key={expense.id} className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors duration-150">
+                      <td className="py-3 px-4 text-sm text-gray-700 dark:text-white">{formatDate(expense.date)}</td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                           {expense.category_name || 'Uncategorized'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">{expense.description || '-'}</td>
-                      <td className="py-3 px-4 text-right text-sm font-semibold text-gray-800">
+                      <td className="py-3 px-4 text-sm text-gray-700 dark:text-white">{expense.description || '-'}</td>
+                      <td className="py-3 px-4 text-right text-sm font-semibold text-gray-800 dark:text-white">
                         {formatCurrency(expense.amount)}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -453,8 +453,8 @@ const Expenses = () => {
                             key={page}
                             onClick={() => goToPage(page)}
                             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === currentPage
-                                ? 'bg-teal-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-teal-600 text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
                               }`}
                           >
                             {page}
@@ -487,7 +487,7 @@ const Expenses = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl dark:shadow-black/40 border border-transparent dark:border-slate-700 max-w-md w-full transition-colors duration-200">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800">
                 {editingExpense ? 'Edit Expense' : 'Add Expense'}
