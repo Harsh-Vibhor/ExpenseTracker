@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
 import UserDashboard from './pages/UserDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import Expenses from './pages/Expenses.jsx';
@@ -17,6 +18,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
       {/* User routes with DashboardLayout (USER only) */}
       <Route element={<ProtectedRoute requiredRole="USER" />}>

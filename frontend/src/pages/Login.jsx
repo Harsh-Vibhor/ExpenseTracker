@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../api/axios.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
@@ -43,72 +43,111 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left Section - Illustration & Text */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-50 to-cyan-100 items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          {/* Finance Illustration SVG */}
-          <div className="mb-8">
-            <svg
-              className="w-full h-64 mx-auto"
-              viewBox="0 0 400 300"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Wallet */}
-              <rect x="80" y="120" width="240" height="140" rx="12" fill="#0D9488" />
-              <rect x="80" y="120" width="240" height="40" rx="12" fill="#14B8A6" />
-              <circle cx="280" cy="140" r="8" fill="#F0FDFA" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-gray-100 to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-400/20 dark:bg-teal-500/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-400/20 dark:bg-blue-500/10 rounded-full blur-3xl"></div>
 
-              {/* Coins */}
-              <circle cx="100" cy="80" r="30" fill="#FCD34D" stroke="#F59E0B" strokeWidth="3" />
-              <text x="100" y="90" textAnchor="middle" fill="#92400E" fontSize="24" fontWeight="bold">$</text>
+      {/* Centered Container with Split Panels */}
+      <div
+        className="w-full max-w-6xl bg-white dark:bg-slate-800 rounded-3xl shadow-[0_20px_80px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col lg:flex-row relative animate-scaleIn"
+        style={{
+          animation: 'scaleIn 0.4s ease-out'
+        }}
+      >
+        {/* Left Panel - Branding & Visual */}
+        <div className="lg:w-[45%] bg-gradient-to-br from-teal-500 via-teal-600 to-blue-600 dark:from-teal-600 dark:via-teal-700 dark:to-blue-700 p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden animate-slideInLeft">
+          {/* Decorative overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full blur-2xl"></div>
 
-              <circle cx="160" cy="60" r="25" fill="#FCD34D" stroke="#F59E0B" strokeWidth="3" />
-              <text x="160" y="68" textAnchor="middle" fill="#92400E" fontSize="20" fontWeight="bold">$</text>
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Logo/Icon */}
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
 
-              {/* Chart bars */}
-              <rect x="140" y="180" width="30" height="60" rx="4" fill="#10B981" />
-              <rect x="180" y="160" width="30" height="80" rx="4" fill="#34D399" />
-              <rect x="220" y="140" width="30" height="100" rx="4" fill="#6EE7B7" />
-              <rect x="260" y="170" width="30" height="70" rx="4" fill="#10B981" />
-            </svg>
-          </div>
+            {/* Illustration */}
+            <div className="mb-10 hidden lg:block">
+              <svg
+                className="w-full h-48 opacity-90"
+                viewBox="0 0 400 200"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Wallet */}
+                <rect x="80" y="60" width="240" height="120" rx="12" fill="rgba(255,255,255,0.2)" />
+                <rect x="80" y="60" width="240" height="35" rx="12" fill="rgba(255,255,255,0.3)" />
+                <circle cx="280" cy="77" r="6" fill="rgba(255,255,255,0.8)" />
 
-          {/* Text Content */}
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            Track your expenses smarter
-          </h1>
-          <p className="text-lg text-gray-600">
-            Simple, clear, and in your control
-          </p>
-        </div>
-      </div>
+                {/* Coins */}
+                <circle cx="100" cy="40" r="25" fill="rgba(252,211,77,0.9)" stroke="rgba(245,158,11,0.9)" strokeWidth="3" />
+                <text x="100" y="48" textAnchor="middle" fill="rgba(146,64,14,0.9)" fontSize="20" fontWeight="bold">$</text>
 
-      {/* Right Section - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-gray-50">
-        <div className="w-full max-w-md">
-          {/* Mobile Header - Only visible on small screens */}
-          <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                <circle cx="150" cy="25" r="20" fill="rgba(252,211,77,0.9)" stroke="rgba(245,158,11,0.9)" strokeWidth="3" />
+                <text x="150" y="32" textAnchor="middle" fill="rgba(146,64,14,0.9)" fontSize="16" fontWeight="bold">$</text>
+
+                {/* Chart bars */}
+                <rect x="120" y="110" width="25" height="50" rx="4" fill="rgba(16,185,129,0.8)" />
+                <rect x="155" y="95" width="25" height="65" rx="4" fill="rgba(52,211,153,0.8)" />
+                <rect x="190" y="80" width="25" height="80" rx="4" fill="rgba(110,231,183,0.8)" />
+                <rect x="225" y="100" width="25" height="60" rx="4" fill="rgba(16,185,129,0.8)" />
+              </svg>
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
               Track your expenses smarter
             </h1>
-            <p className="text-gray-600">
-              Simple, clear, and in your control
+            <p className="text-xl text-white/90 leading-relaxed">
+              Simple, clear, and in your control. Take charge of your financial future today.
             </p>
-          </div>
 
-          {/* Login Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome back</h2>
-            <p className="text-gray-600 mb-6">Sign in to your account</p>
+            {/* Feature highlights */}
+            <div className="mt-10 space-y-3 hidden lg:block">
+              <div className="flex items-center text-white/80">
+                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm">Real-time expense tracking</span>
+              </div>
+              <div className="flex items-center text-white/80">
+                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm">Detailed analytics & insights</span>
+              </div>
+              <div className="flex items-center text-white/80">
+                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm">Secure & private</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel - Login Form */}
+        <div className="lg:w-[55%] p-8 lg:p-16 flex items-center justify-center bg-white dark:bg-slate-800 animate-slideInRight">
+          <div className="w-full max-w-md">
+            {/* Form Header */}
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back</h2>
+              <p className="text-gray-600 dark:text-gray-400">Sign in to continue to your account</p>
+            </div>
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm flex items-center">
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl animate-shake">
+                <p className="text-red-700 dark:text-red-300 text-sm flex items-center">
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-5 h-5 mr-2 flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -124,12 +163,12 @@ const Login = () => {
             )}
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Input */}
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2"
                 >
                   Email address
                 </label>
@@ -138,7 +177,7 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
+                  className="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-teal-500 dark:focus:border-teal-400 transition-all duration-200 outline-none hover:border-gray-300 dark:hover:border-slate-500 text-base"
                   placeholder="you@example.com"
                   required
                   disabled={loading}
@@ -149,7 +188,7 @@ const Login = () => {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2"
                 >
                   Password
                 </label>
@@ -158,7 +197,7 @@ const Login = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
+                  className="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-teal-500 dark:focus:border-teal-400 transition-all duration-200 outline-none hover:border-gray-300 dark:hover:border-slate-500 text-base"
                   placeholder="••••••••"
                   required
                   disabled={loading}
@@ -169,7 +208,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 dark:from-teal-500 dark:to-teal-600 dark:hover:from-teal-600 dark:hover:to-teal-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 hover:-translate-y-0.5 active:translate-y-0 text-base"
               >
                 {loading ? (
                   <>
@@ -201,16 +240,92 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Footer Text */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+            {/* Footer */}
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
-                <span className="text-teal-600 font-medium">Contact admin</span>
+                <Link
+                  to="/signup"
+                  className="text-teal-600 dark:text-teal-400 font-semibold hover:underline transition-all"
+                >
+                  Create account
+                </Link>
+              </p>
+            </div>
+
+            {/* Divider */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700">
+              <p className="text-xs text-center text-gray-500 dark:text-gray-500">
+                Secure login powered by JWT authentication
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes shake {
+          0%, 100% {
+            transform: translateX(0);
+          }
+          25% {
+            transform: translateX(-4px);
+          }
+          75% {
+            transform: translateX(4px);
+          }
+        }
+
+        .animate-scaleIn {
+          animation: scaleIn 0.4s ease-out;
+        }
+
+        .animate-slideInLeft {
+          animation: slideInLeft 0.5s ease-out 0.1s both;
+        }
+
+        .animate-slideInRight {
+          animation: slideInRight 0.5s ease-out 0.2s both;
+        }
+
+        .animate-shake {
+          animation: shake 0.3s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 };
