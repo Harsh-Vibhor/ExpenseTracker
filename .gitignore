@@ -1,0 +1,108 @@
+# =====================================================
+# DEPENDENCIES
+# =====================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# =====================================================
+# ENVIRONMENT VARIABLES
+# =====================================================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# =====================================================
+# BUILD OUTPUTS
+# =====================================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.vite/
+*.tsbuildinfo
+
+# =====================================================
+# LOGS
+# =====================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# =====================================================
+# TESTING
+# =====================================================
+coverage/
+*.lcov
+.nyc_output/
+.jest/
+
+# =====================================================
+# TEMPORARY FILES
+# =====================================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =====================================================
+# IDE / EDITOR
+# =====================================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.iml
+.project
+.classpath
+.settings/
+*.code-workspace
+
+# =====================================================
+# OS SPECIFIC
+# =====================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# =====================================================
+# MISC
+# =====================================================
+*.pid
+*.seed
+*.pid.lock
+.npm/
+.eslintcache
+.stylelintcache
+.node_repl_history
+*.tgz
+
+# =====================================================
+# OPTIONAL: Keep these if needed
+# =====================================================
+# .env.example  (keep this for documentation)
+# package.json  (keep this - required)
+# package-lock.json  (keep this for consistent installs)

@@ -1,0 +1,88 @@
+# =====================================================
+# GIT CLEANUP - QUICK COMMANDS
+# =====================================================
+# Run these commands ONE BY ONE in PowerShell
+# Copy and paste each command, wait for it to complete
+# =====================================================
+
+# Step 1: Navigate to project root
+cd "d:\Projects\Expense Tracker"
+
+# Step 2: Check current status
+git status --short | measure-object -Line
+# This shows how many files are changed
+
+# Step 3: Remove node_modules from Git tracking
+# This will take 2-5 minutes - BE PATIENT!
+git rm -r --cached backend/node_modules
+git rm -r --cached frontend/node_modules
+
+# Step 4: Add .gitignore to Git
+git add .gitignore
+
+# Step 5: Stage all remaining changes
+git add .
+
+# Step 6: Check what will be committed
+git status
+
+# Step 7: Commit the cleanup
+git commit -m "chore: remove node_modules from Git tracking and add .gitignore"
+
+# Step 8: Push to GitHub
+git push origin main
+
+# =====================================================
+# VERIFICATION COMMANDS
+# =====================================================
+
+# Check repository size
+git count-objects -vH
+
+# Verify node_modules is ignored
+git status
+# Should show "nothing to commit, working tree clean"
+
+# Test that node_modules is ignored
+echo "test" > backend/node_modules/test.txt
+git status
+# Should NOT show the test file
+
+# Clean up test file
+del backend/node_modules/test.txt
+
+# =====================================================
+# ALTERNATIVE: If above is too slow
+# =====================================================
+
+# This removes ALL files from cache and re-adds them
+# Faster but more aggressive
+git rm -r --cached .
+git add .
+git commit -m "chore: remove node_modules and add .gitignore"
+git push origin main
+
+# =====================================================
+# TROUBLESHOOTING
+# =====================================================
+
+# If push fails due to size, increase buffer:
+git config http.postBuffer 524288000
+git push origin main
+
+# If you need to force push (use with caution):
+git push origin main --force
+
+# =====================================================
+# POST-CLEANUP TEST
+# =====================================================
+
+# Test fresh install in backend
+cd backend
+npm install
+npm run dev
+
+# Test fresh install in frontend (in new terminal)
+cd frontend
+npm install
+npm run dev
