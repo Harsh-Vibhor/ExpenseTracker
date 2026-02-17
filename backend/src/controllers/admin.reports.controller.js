@@ -6,33 +6,34 @@ export const getAdminOverview = async (req, res) => {
         const pool = getDb();
 
         // Total users (all roles)
-        const [[userCount]] = await pool.execute('SELECT COUNT(*) AS totalUsers FROM users');
+        const userCountResult = await pool.query('SELECT COUNT(*) AS totalUsers FROM users');
 
         // Total expenses amount (all users including admins)
-        const [[expenseTotal]] = await pool.execute(
+        const expenseTotalResult = await pool.query(
             'SELECT COALESCE(SUM(amount), 0) AS totalExpenses FROM expenses'
         );
 
         // Total transactions count (all users including admins)
-        const [[transactionCount]] = await pool.execute(
+        const transactionCountResult = await pool.query(
             'SELECT COUNT(*) AS totalTransactions FROM expenses'
         );
 
         // Average expense per user (excluding admins for accurate analytics)
-        const [[userOnlyStats]] = await pool.execute(
+        const userOnlyStatsResult = await pool.query(
             `SELECT 
         COUNT(DISTINCT u.id) AS userCount,
         COALESCE(SUM(e.amount), 0) AS userExpenses
        FROM users u
        LEFT JOIN expenses e ON e.user_id = u.id
-       WHERE u.role = 'USER'`
+       WHERE u.role = $1`,
+            ['USER']
         );
 
-        const totalUsers = Number(userCount.totalUsers || 0);
-        const totalExpenses = Number(expenseTotal.totalExpenses || 0);
-        const totalTransactions = Number(transactionCount.totalTransactions || 0);
-        const userOnlyCount = Number(userOnlyStats.userCount || 0);
-        const userOnlyExpenses = Number(userOnlyStats.userExpenses || 0);
+        const totalUsers = Number(userCountResult.rows[0].totalusers || 0);
+        const totalExpenses = Number(expenseTotalResult.rows[0].totalexpenses || 0);
+        const totalTransactions = Number(transactionCountResult.rows[0].totaltransactions || 0);
+        const userOnlyCount = Number(userOnlyStatsResult.rows[0].usercount || 0);
+        const userOnlyExpenses = Number(userOnlyStatsResult.rows[0].userexpenses || 0);
         const avgExpensePerUser = userOnlyCount > 0 ? userOnlyExpenses / userOnlyCount : 0;
 
         return res.json({
@@ -52,7 +53,7 @@ export const getCategoryWiseSpending = async (req, res) => {
     try {
         const pool = getDb();
 
-        const [categoryData] = await pool.execute(
+        const categoryDataResult = await pool.query(
             `SELECT 
         c.id AS categoryId,
         c.name AS categoryName,
@@ -63,10 +64,10 @@ export const getCategoryWiseSpending = async (req, res) => {
        ORDER BY totalSpent DESC, c.name ASC`
         );
 
-        const formattedData = categoryData.map((row) => ({
-            categoryId: row.categoryId,
-            categoryName: row.categoryName,
-            totalSpent: Number(row.totalSpent || 0),
+        const formattedData = categoryDataResult.rows.map((row) => ({
+            categoryId: row.categoryid,
+            categoryName: row.categoryname,
+            totalSpent: Number(row.totalspent || 0),
         }));
 
         return res.json({ categories: formattedData });
@@ -88,7 +89,7 @@ export const getTopUsersBySpending = async (req, res) => {
         }
 
         // Exclude admin users from rankings for accurate user analytics
-        const [topUsers] = await pool.execute(
+        const topUsersResult = await pool.query(
             `SELECT 
         u.id AS userId,
         u.name,
@@ -96,18 +97,18 @@ export const getTopUsersBySpending = async (req, res) => {
         COALESCE(SUM(e.amount), 0) AS totalSpent
        FROM users u
        LEFT JOIN expenses e ON e.user_id = u.id
-       WHERE u.role = 'USER'
+       WHERE u.role = $1
        GROUP BY u.id, u.name, u.email
        ORDER BY totalSpent DESC
-       LIMIT ?`,
-            [limit]
+       LIMIT $2`,
+            ['USER', limit]
         );
 
-        const formattedData = topUsers.map((row) => ({
-            userId: row.userId,
+        const formattedData = topUsersResult.rows.map((row) => ({
+            userId: row.userid,
             name: row.name,
             email: row.email,
-            totalSpent: Number(row.totalSpent || 0),
+            totalSpent: Number(row.totalspent || 0),
         }));
 
         return res.json({ users: formattedData });

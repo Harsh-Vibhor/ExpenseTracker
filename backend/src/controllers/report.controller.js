@@ -18,37 +18,37 @@ export const getMonthlySummary = async (req, res) => {
         const pool = getDb();
 
         // Get total spent for the month
-        const [[totalRow]] = await pool.execute(
+        const totalResult = await pool.query(
             `SELECT COALESCE(SUM(amount), 0) AS totalSpent
        FROM expenses
-       WHERE user_id = ?
-         AND DATE_FORMAT(expense_date, '%Y-%m') = ?`,
+       WHERE user_id = $1
+         AND TO_CHAR(expense_date, 'YYYY-MM') = $2`,
             [userId, month]
         );
 
         // Get category breakdown
-        const [categoryRows] = await pool.execute(
+        const categoryResult = await pool.query(
             `SELECT 
          c.id AS categoryId,
          c.name AS categoryName,
          COALESCE(SUM(e.amount), 0) AS totalSpent
        FROM categories c
        LEFT JOIN expenses e ON e.category_id = c.id 
-         AND e.user_id = ?
-         AND DATE_FORMAT(e.expense_date, '%Y-%m') = ?
+         AND e.user_id = $1
+         AND TO_CHAR(e.expense_date, 'YYYY-MM') = $2
        GROUP BY c.id, c.name
-       HAVING totalSpent > 0
+       HAVING COALESCE(SUM(e.amount), 0) > 0
        ORDER BY totalSpent DESC`,
             [userId, month]
         );
 
         return res.json({
             month,
-            totalSpent: Number(totalRow.totalSpent),
-            categoryBreakdown: categoryRows.map(row => ({
-                categoryId: row.categoryId,
-                categoryName: row.categoryName,
-                totalSpent: Number(row.totalSpent),
+            totalSpent: Number(totalResult.rows[0].totalspent),
+            categoryBreakdown: categoryResult.rows.map(row => ({
+                categoryId: row.categoryid,
+                categoryName: row.categoryname,
+                totalSpent: Number(row.totalspent),
             })),
         });
     } catch (err) {
@@ -75,7 +75,7 @@ export const getBudgetVsActual = async (req, res) => {
         const pool = getDb();
 
         // Get budget vs actual for all categories
-        const [rows] = await pool.execute(
+        const result = await pool.query(
             `SELECT 
          c.id AS categoryId,
          c.name AS categoryName,
@@ -83,11 +83,11 @@ export const getBudgetVsActual = async (req, res) => {
          COALESCE(SUM(e.amount), 0) AS spentAmount
        FROM categories c
        LEFT JOIN category_budgets cb ON cb.category_id = c.id 
-         AND cb.user_id = ?
-         AND cb.month = ?
+         AND cb.user_id = $1
+         AND cb.month = $2
        LEFT JOIN expenses e ON e.category_id = c.id 
-         AND e.user_id = ?
-         AND DATE_FORMAT(e.expense_date, '%Y-%m') = ?
+         AND e.user_id = $3
+         AND TO_CHAR(e.expense_date, 'YYYY-MM') = $4
        GROUP BY c.id, c.name, cb.amount
        ORDER BY c.name ASC`,
             [userId, month, userId, month]
@@ -95,12 +95,12 @@ export const getBudgetVsActual = async (req, res) => {
 
         return res.json({
             month,
-            data: rows.map(row => ({
-                categoryId: row.categoryId,
-                categoryName: row.categoryName,
-                budgetAmount: Number(row.budgetAmount),
-                spentAmount: Number(row.spentAmount),
-                remainingAmount: Number(row.budgetAmount) - Number(row.spentAmount),
+            data: result.rows.map(row => ({
+                categoryId: row.categoryid,
+                categoryName: row.categoryname,
+                budgetAmount: Number(row.budgetamount),
+                spentAmount: Number(row.spentamount),
+                remainingAmount: Number(row.budgetamount) - Number(row.spentamount),
             })),
         });
     } catch (err) {
@@ -127,14 +127,14 @@ export const getYearlyOverview = async (req, res) => {
         const pool = getDb();
 
         // Get monthly totals for the year
-        const [rows] = await pool.execute(
+        const result = await pool.query(
             `SELECT 
-         DATE_FORMAT(expense_date, '%Y-%m') AS month,
+         TO_CHAR(expense_date, 'YYYY-MM') AS month,
          SUM(amount) AS totalSpent
        FROM expenses
-       WHERE user_id = ?
-         AND YEAR(expense_date) = ?
-       GROUP BY DATE_FORMAT(expense_date, '%Y-%m')
+       WHERE user_id = $1
+         AND EXTRACT(YEAR FROM expense_date) = $2
+       GROUP BY TO_CHAR(expense_date, 'YYYY-MM')
        ORDER BY month ASC`,
             [userId, year]
         );
@@ -143,10 +143,10 @@ export const getYearlyOverview = async (req, res) => {
         const monthlyData = [];
         for (let m = 1; m <= 12; m++) {
             const monthStr = `${year}-${String(m).padStart(2, '0')}`;
-            const found = rows.find(row => row.month === monthStr);
+            const found = result.rows.find(row => row.month === monthStr);
             monthlyData.push({
                 month: monthStr,
-                totalSpent: found ? Number(found.totalSpent) : 0,
+                totalSpent: found ? Number(found.totalspent) : 0,
             });
         }
 

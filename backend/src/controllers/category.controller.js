@@ -88,29 +88,29 @@ export const getCategoryExpenses = async (req, res) => {
     const pool = getDb();
 
     // Get expenses for this category and month
-    const [expenses] = await pool.execute(
+    const expensesResult = await pool.query(
       `SELECT e.id, e.amount, e.description, e.expense_date as date
        FROM expenses e
-       WHERE e.user_id = ? 
-         AND e.category_id = ?
-         AND DATE_FORMAT(e.expense_date, '%Y-%m') = ?
+       WHERE e.user_id = $1
+         AND e.category_id = $2
+         AND TO_CHAR(e.expense_date, 'YYYY-MM') = $3
        ORDER BY e.expense_date DESC, e.id DESC`,
       [userId, id, month]
     );
 
     // Calculate total spent
-    const [[totalRow]] = await pool.execute(
+    const totalResult = await pool.query(
       `SELECT COALESCE(SUM(amount), 0) AS total
        FROM expenses
-       WHERE user_id = ? 
-         AND category_id = ?
-         AND DATE_FORMAT(expense_date, '%Y-%m') = ?`,
+       WHERE user_id = $1
+         AND category_id = $2
+         AND TO_CHAR(expense_date, 'YYYY-MM') = $3`,
       [userId, id, month]
     );
 
     return res.json({
-      expenses,
-      total: Number(totalRow.total || 0),
+      expenses: expensesResult.rows,
+      total: Number(totalResult.rows[0].total || 0),
       month,
       categoryId: parseInt(id),
     });
@@ -134,14 +134,16 @@ export const getCategoryBudget = async (req, res) => {
     const { getDb } = await import('../config/db.js');
     const pool = getDb();
 
-    const [[budget]] = await pool.execute(
+    const budgetResult = await pool.query(
       `SELECT id, amount, month
        FROM category_budgets
-       WHERE user_id = ? 
-         AND category_id = ?
-         AND month = ?`,
+       WHERE user_id = $1
+         AND category_id = $2
+         AND month = $3`,
       [userId, id, month]
     );
+
+    const budget = budgetResult.rows[0];
 
     if (!budget) {
       return res.json({ budget: null, month, categoryId: parseInt(id) });
@@ -188,23 +190,26 @@ export const setCategoryBudget = async (req, res) => {
     const { getDb } = await import('../config/db.js');
     const pool = getDb();
 
-    // UPSERT: Insert or update if exists
-    await pool.execute(
+    // UPSERT: Insert or update if exists (PostgreSQL syntax)
+    await pool.query(
       `INSERT INTO category_budgets (user_id, category_id, month, amount)
-       VALUES (?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE amount = VALUES(amount)`,
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, category_id, month)
+       DO UPDATE SET amount = EXCLUDED.amount`,
       [userId, id, month, amount]
     );
 
     // Fetch the updated budget
-    const [[budget]] = await pool.execute(
+    const budgetResult = await pool.query(
       `SELECT id, amount, month
        FROM category_budgets
-       WHERE user_id = ? 
-         AND category_id = ?
-         AND month = ?`,
+       WHERE user_id = $1
+         AND category_id = $2
+         AND month = $3`,
       [userId, id, month]
     );
+
+    const budget = budgetResult.rows[0];
 
     if (!budget) {
       console.error('Budget not found after insert/update');
@@ -226,7 +231,7 @@ export const setCategoryBudget = async (req, res) => {
     console.error('Error details:', {
       message: err.message,
       code: err.code,
-      sqlMessage: err.sqlMessage,
+      detail: err.detail,
     });
     return res.status(500).json({
       message: 'Internal server error',

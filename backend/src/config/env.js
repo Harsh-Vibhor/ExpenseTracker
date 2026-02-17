@@ -11,8 +11,10 @@ export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 4000,
   db: {
+    url: process.env.DATABASE_URL, // PostgreSQL connection string (for Supabase/Render)
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
+    port: process.env.DB_PORT || 5432,
+    user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'expense_tracker',
   },
