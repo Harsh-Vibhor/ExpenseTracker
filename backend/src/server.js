@@ -1,12 +1,11 @@
 import app from './app.js';
 import { env } from './config/env.js';
-import { testConnection } from './config/db.js';
+
+// Eagerly import supabase so any missing-env errors surface at startup
+import './config/supabase.js';
 
 const start = async () => {
   try {
-    await testConnection();
-    console.log('Database connection established');
-
     app.listen(env.port, () => {
       console.log(`Server running on port ${env.port}`);
     });

@@ -1,6 +1,5 @@
-import { getDb } from '../config/db.js';
 import { createExpense, deleteExpense, getExpenseById, getExpensesByUser, updateExpense } from '../models/Expense.js';
-import { findCategoryById, getAllCategories, seedDefaultCategoriesIfEmpty } from '../models/Category.js';
+import { findCategoryById, getCategoriesByUser, seedDefaultCategoriesIfEmpty } from '../models/Category.js';
 
 export const addExpense = async (req, res) => {
   try {
@@ -87,10 +86,12 @@ export const deleteUserExpense = async (req, res) => {
   }
 };
 
+// Used by expense routes to list categories for the current user
 export const listCategories = async (req, res) => {
   try {
-    await seedDefaultCategoriesIfEmpty();
-    const categories = await getAllCategories();
+    const userId = req.user.id;
+    await seedDefaultCategoriesIfEmpty(userId);
+    const categories = await getCategoriesByUser(userId);
     return res.json(categories);
   } catch (err) {
     console.error('List categories error:', err);

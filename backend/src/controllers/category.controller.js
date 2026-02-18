@@ -1,17 +1,20 @@
 import {
-  getAllCategories,
+  getCategoriesByUser,
   createCategory,
   deleteCategory,
-  findCategoryByName,
+  findCategoryByNameAndUser,
   findCategoryById,
   getCategoryUsageCount,
   seedDefaultCategoriesIfEmpty,
 } from '../models/Category.js';
+import { supabase } from '../config/supabase.js';
 
+// ── GET /api/categories ───────────────────────────────────────────────────────
 export const listCategories = async (req, res) => {
   try {
-    await seedDefaultCategoriesIfEmpty();
-    const categories = await getAllCategories();
+    const userId = req.user.id;
+    await seedDefaultCategoriesIfEmpty(userId);
+    const categories = await getCategoriesByUser(userId);
     return res.json(categories);
   } catch (err) {
     console.error('List categories error:', err);
@@ -19,9 +22,11 @@ export const listCategories = async (req, res) => {
   }
 };
 
+// ── POST /api/categories ──────────────────────────────────────────────────────
 export const addCategory = async (req, res) => {
   try {
     const { name } = req.body;
+    const userId = req.user.id;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ message: 'Category name is required' });
@@ -29,13 +34,12 @@ export const addCategory = async (req, res) => {
 
     const trimmedName = name.trim();
 
-    // Check if category already exists
-    const existing = await findCategoryByName(trimmedName);
+    const existing = await findCategoryByNameAndUser(trimmedName, userId);
     if (existing) {
       return res.status(400).json({ message: 'Category already exists' });
     }
 
-    const category = await createCategory({ name: trimmedName });
+    const category = await createCategory({ name: trimmedName, userId });
     return res.status(201).json(category);
   } catch (err) {
     console.error('Add category error:', err);
@@ -43,15 +47,15 @@ export const addCategory = async (req, res) => {
   }
 };
 
+// ── DELETE /api/categories/:id ────────────────────────────────────────────────
 export const removeCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if category is being used by any expenses
     const usageCount = await getCategoryUsageCount(id);
     if (usageCount > 0) {
       return res.status(400).json({
-        message: `Cannot delete category. It is being used by ${usageCount} expense(s).`
+        message: `Cannot delete category. It is being used by ${usageCount} expense(s).`,
       });
     }
 
@@ -63,56 +67,47 @@ export const removeCategory = async (req, res) => {
     return res.json({ message: 'Category deleted successfully' });
   } catch (err) {
     console.error('Delete category error:', err);
-
-    // Handle foreign key constraint error
     if (err.message && err.message.includes('being used by expenses')) {
       return res.status(400).json({ message: err.message });
     }
-
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Get expenses for a specific category and month
+// ── GET /api/categories/:id/expenses?month=YYYY-MM ────────────────────────────
 export const getCategoryExpenses = async (req, res) => {
   try {
     const { id } = req.params;
-    const { month } = req.query; // Format: YYYY-MM
+    const { month } = req.query;
     const userId = req.user.id;
 
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       return res.status(400).json({ message: 'Valid month (YYYY-MM) is required' });
     }
 
-    const { getDb } = await import('../config/db.js');
-    const pool = getDb();
+    const [year, mon] = month.split('-').map(Number);
+    const from = `${month}-01`;
+    const lastDay = new Date(year, mon, 0).getDate();
+    const to = `${month}-${String(lastDay).padStart(2, '0')}`;
 
-    // Get expenses for this category and month
-    const expensesResult = await pool.query(
-      `SELECT e.id, e.amount, e.description, e.expense_date as date
-       FROM expenses e
-       WHERE e.user_id = $1
-         AND e.category_id = $2
-         AND TO_CHAR(e.expense_date, 'YYYY-MM') = $3
-       ORDER BY e.expense_date DESC, e.id DESC`,
-      [userId, id, month]
-    );
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('id, amount, description, date')
+      .eq('user_id', userId)
+      .eq('category_id', id)
+      .gte('date', from)
+      .lte('date', to)
+      .order('date', { ascending: false });
 
-    // Calculate total spent
-    const totalResult = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) AS total
-       FROM expenses
-       WHERE user_id = $1
-         AND category_id = $2
-         AND TO_CHAR(expense_date, 'YYYY-MM') = $3`,
-      [userId, id, month]
-    );
+    if (error) throw error;
+
+    const total = data.reduce((s, e) => s + Number(e.amount), 0);
 
     return res.json({
-      expenses: expensesResult.rows,
-      total: Number(totalResult.rows[0].total || 0),
+      expenses: data.map((e) => ({ id: e.id, amount: e.amount, description: e.description, date: e.date })),
+      total,
       month,
-      categoryId: parseInt(id),
+      categoryId: id,
     });
   } catch (err) {
     console.error('Get category expenses error:', err);
@@ -120,43 +115,35 @@ export const getCategoryExpenses = async (req, res) => {
   }
 };
 
-// Get budget for a specific category and month
+// ── GET /api/categories/:id/budget?month=YYYY-MM ──────────────────────────────
 export const getCategoryBudget = async (req, res) => {
   try {
     const { id } = req.params;
-    const { month } = req.query; // Format: YYYY-MM
+    const { month } = req.query;
     const userId = req.user.id;
 
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       return res.status(400).json({ message: 'Valid month (YYYY-MM) is required' });
     }
 
-    const { getDb } = await import('../config/db.js');
-    const pool = getDb();
+    const { data, error } = await supabase
+      .from('category_budgets')
+      .select('id, budget_amount, month')
+      .eq('user_id', userId)
+      .eq('category_id', id)
+      .eq('month', month)
+      .maybeSingle();
 
-    const budgetResult = await pool.query(
-      `SELECT id, amount, month
-       FROM category_budgets
-       WHERE user_id = $1
-         AND category_id = $2
-         AND month = $3`,
-      [userId, id, month]
-    );
+    if (error) throw error;
 
-    const budget = budgetResult.rows[0];
-
-    if (!budget) {
-      return res.json({ budget: null, month, categoryId: parseInt(id) });
+    if (!data) {
+      return res.json({ budget: null, month, categoryId: id });
     }
 
     return res.json({
-      budget: {
-        id: budget.id,
-        amount: Number(budget.amount),
-        month: budget.month,
-      },
+      budget: { id: data.id, amount: Number(data.budget_amount), month: data.month },
       month,
-      categoryId: parseInt(id),
+      categoryId: id,
     });
   } catch (err) {
     console.error('Get category budget error:', err);
@@ -164,78 +151,55 @@ export const getCategoryBudget = async (req, res) => {
   }
 };
 
-// Set or update budget for a specific category and month
+// ── POST /api/categories/:id/budget ───────────────────────────────────────────
 export const setCategoryBudget = async (req, res) => {
   try {
     const { id } = req.params;
     const { month, amount } = req.body;
     const userId = req.user.id;
 
-    console.log('Set budget request:', { userId, categoryId: id, month, amount });
-
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       return res.status(400).json({ message: 'Valid month (YYYY-MM) is required' });
     }
-
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: 'Valid amount is required' });
     }
 
-    // Verify category exists
     const category = await findCategoryById(id);
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    const { getDb } = await import('../config/db.js');
-    const pool = getDb();
+    // UPSERT — schema has UNIQUE(user_id, category_id, month)
+    const { error: upsertErr } = await supabase
+      .from('category_budgets')
+      .upsert(
+        { user_id: userId, category_id: id, month, budget_amount: amount },
+        { onConflict: 'user_id,category_id,month' }
+      );
 
-    // UPSERT: Insert or update if exists (PostgreSQL syntax)
-    await pool.query(
-      `INSERT INTO category_budgets (user_id, category_id, month, amount)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (user_id, category_id, month)
-       DO UPDATE SET amount = EXCLUDED.amount`,
-      [userId, id, month, amount]
-    );
+    if (upsertErr) throw upsertErr;
 
-    // Fetch the updated budget
-    const budgetResult = await pool.query(
-      `SELECT id, amount, month
-       FROM category_budgets
-       WHERE user_id = $1
-         AND category_id = $2
-         AND month = $3`,
-      [userId, id, month]
-    );
+    // Fetch the saved record
+    const { data, error: fetchErr } = await supabase
+      .from('category_budgets')
+      .select('id, budget_amount, month')
+      .eq('user_id', userId)
+      .eq('category_id', id)
+      .eq('month', month)
+      .single();
 
-    const budget = budgetResult.rows[0];
-
-    if (!budget) {
-      console.error('Budget not found after insert/update');
-      return res.status(500).json({ message: 'Failed to save budget' });
-    }
-
-    console.log('Budget saved successfully:', budget);
+    if (fetchErr) throw fetchErr;
 
     return res.json({
-      budget: {
-        id: budget.id,
-        amount: Number(budget.amount),
-        month: budget.month,
-      },
+      budget: { id: data.id, amount: Number(data.budget_amount), month: data.month },
       message: 'Budget updated successfully',
     });
   } catch (err) {
     console.error('Set category budget error:', err);
-    console.error('Error details:', {
-      message: err.message,
-      code: err.code,
-      detail: err.detail,
-    });
     return res.status(500).json({
       message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
     });
   }
 };

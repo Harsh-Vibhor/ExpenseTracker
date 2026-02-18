@@ -1,78 +1,102 @@
-import { getDb } from '../config/db.js';
+import { supabase } from '../config/supabase.js';
 
-export const createCategory = async ({ name }) => {
-  const pool = getDb();
-  const result = await pool.query(
-    'INSERT INTO categories (name) VALUES ($1) RETURNING id, name',
-    [name]
-  );
-  return result.rows[0];
+// NOTE: In the Supabase schema, categories are user-scoped (have a user_id).
+// All category operations that are user-facing must filter by user_id.
+// Admin operations may read across all users.
+
+export const createCategory = async ({ name, userId }) => {
+  const { data, error } = await supabase
+    .from('categories')
+    .insert({ name, user_id: userId })
+    .select('id, name, user_id')
+    .single();
+
+  if (error) throw error;
+  return data;
 };
 
-export const getCategoriesByUser = async () => {
-  const pool = getDb();
-  // Categories are global, not user-specific based on schema
-  const result = await pool.query('SELECT * FROM categories ORDER BY name ASC');
-  return result.rows;
+export const getCategoriesByUser = async (userId) => {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('id, name, user_id, created_at')
+    .eq('user_id', userId)
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return data;
 };
 
-export const getAllCategories = async () => {
-  const pool = getDb();
-  const result = await pool.query('SELECT * FROM categories ORDER BY name ASC');
-  return result.rows;
-};
+// Alias used by some controllers
+export const getAllCategories = getCategoriesByUser;
 
 export const findCategoryById = async (categoryId) => {
-  const pool = getDb();
-  const result = await pool.query('SELECT * FROM categories WHERE id = $1 LIMIT 1', [categoryId]);
-  return result.rows[0] || null;
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('id', categoryId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
 };
 
-export const seedDefaultCategoriesIfEmpty = async () => {
-  const pool = getDb();
-  const result = await pool.query('SELECT COUNT(*) as count FROM categories');
-  const count = parseInt(result.rows[0].count);
+export const findCategoryByNameAndUser = async (name, userId) => {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('id, name')
+    .eq('name', name)
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  if (count === 0) {
-    const defaultCategories = [
-      'Food',
-      'Transportation',
-      'Entertainment',
-      'Shopping',
-      'Bills',
-      'Healthcare',
-      'Education',
-      'Others'
-    ];
-
-    for (const categoryName of defaultCategories) {
-      await pool.query('INSERT INTO categories (name) VALUES ($1)', [categoryName]);
-    }
-  }
+  if (error) throw error;
+  return data;
 };
 
-export const findCategoryByName = async (name) => {
-  const pool = getDb();
-  const result = await pool.query('SELECT * FROM categories WHERE name = $1 LIMIT 1', [name]);
-  return result.rows[0] || null;
-};
+// Keep old name as alias so category.controller.js import doesn't break
+export const findCategoryByName = findCategoryByNameAndUser;
 
 export const deleteCategory = async (categoryId) => {
-  const pool = getDb();
-  try {
-    const result = await pool.query('DELETE FROM categories WHERE id = $1', [categoryId]);
-    return result.rowCount > 0;
-  } catch (err) {
-    // Check if it's a foreign key constraint error (PostgreSQL error code)
-    if (err.code === '23503') {
+  const { error, count } = await supabase
+    .from('categories')
+    .delete({ count: 'exact' })
+    .eq('id', categoryId);
+
+  if (error) {
+    // Supabase surfaces FK violations as a 23503 postgres error code
+    if (error.code === '23503') {
       throw new Error('Cannot delete category that is being used by expenses');
     }
-    throw err;
+    throw error;
   }
+  return count > 0;
 };
 
 export const getCategoryUsageCount = async (categoryId) => {
-  const pool = getDb();
-  const result = await pool.query('SELECT COUNT(*) as count FROM expenses WHERE category_id = $1', [categoryId]);
-  return parseInt(result.rows[0].count);
+  const { count, error } = await supabase
+    .from('expenses')
+    .select('id', { count: 'exact', head: true })
+    .eq('category_id', categoryId);
+
+  if (error) throw error;
+  return count ?? 0;
+};
+
+export const seedDefaultCategoriesIfEmpty = async (userId) => {
+  const { count, error } = await supabase
+    .from('categories')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  if (count === 0) {
+    const defaultCategories = [
+      'Food', 'Transportation', 'Entertainment',
+      'Shopping', 'Bills', 'Healthcare', 'Education', 'Others',
+    ];
+
+    const rows = defaultCategories.map((name) => ({ name, user_id: userId }));
+    const { error: insertError } = await supabase.from('categories').insert(rows);
+    if (insertError) throw insertError;
+  }
 };

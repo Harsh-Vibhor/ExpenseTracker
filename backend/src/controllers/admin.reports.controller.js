@@ -1,74 +1,57 @@
-import { getDb } from '../config/db.js';
+import { supabase } from '../config/supabase.js';
 
-// Get admin reports overview
+// ── GET /api/admin/reports/overview ──────────────────────────────────────────
 export const getAdminOverview = async (req, res) => {
     try {
-        const pool = getDb();
+        const [usersRes, expensesRes, userOnlyRes] = await Promise.all([
+            supabase.from('users').select('id', { count: 'exact', head: true }),
+            supabase.from('expenses').select('amount'),
+            supabase.from('users')
+                .select('id, expenses ( amount )')
+                .eq('role', 'USER'),
+        ]);
 
-        // Total users (all roles)
-        const userCountResult = await pool.query('SELECT COUNT(*) AS totalUsers FROM users');
+        if (usersRes.error) throw usersRes.error;
+        if (expensesRes.error) throw expensesRes.error;
+        if (userOnlyRes.error) throw userOnlyRes.error;
 
-        // Total expenses amount (all users including admins)
-        const expenseTotalResult = await pool.query(
-            'SELECT COALESCE(SUM(amount), 0) AS totalExpenses FROM expenses'
+        const totalUsers = usersRes.count ?? 0;
+        const totalTransactions = (expensesRes.data ?? []).length;
+        const totalExpenses = (expensesRes.data ?? []).reduce(
+            (s, e) => s + Number(e.amount), 0
         );
 
-        // Total transactions count (all users including admins)
-        const transactionCountResult = await pool.query(
-            'SELECT COUNT(*) AS totalTransactions FROM expenses'
+        const userOnlyData = userOnlyRes.data ?? [];
+        const userOnlyCount = userOnlyData.length;
+        const userOnlyExpenses = userOnlyData.reduce(
+            (s, u) => s + (u.expenses ?? []).reduce((es, e) => es + Number(e.amount), 0),
+            0
         );
+        const avgExpensePerUser = userOnlyCount > 0
+            ? Number((userOnlyExpenses / userOnlyCount).toFixed(2))
+            : 0;
 
-        // Average expense per user (excluding admins for accurate analytics)
-        const userOnlyStatsResult = await pool.query(
-            `SELECT 
-        COUNT(DISTINCT u.id) AS userCount,
-        COALESCE(SUM(e.amount), 0) AS userExpenses
-       FROM users u
-       LEFT JOIN expenses e ON e.user_id = u.id
-       WHERE u.role = $1`,
-            ['USER']
-        );
-
-        const totalUsers = Number(userCountResult.rows[0].totalusers || 0);
-        const totalExpenses = Number(expenseTotalResult.rows[0].totalexpenses || 0);
-        const totalTransactions = Number(transactionCountResult.rows[0].totaltransactions || 0);
-        const userOnlyCount = Number(userOnlyStatsResult.rows[0].usercount || 0);
-        const userOnlyExpenses = Number(userOnlyStatsResult.rows[0].userexpenses || 0);
-        const avgExpensePerUser = userOnlyCount > 0 ? userOnlyExpenses / userOnlyCount : 0;
-
-        return res.json({
-            totalUsers,
-            totalExpenses,
-            totalTransactions,
-            avgExpensePerUser: Number(avgExpensePerUser.toFixed(2)),
-        });
+        return res.json({ totalUsers, totalExpenses, totalTransactions, avgExpensePerUser });
     } catch (err) {
         console.error('Admin reports overview error:', err);
         return res.status(500).json({ message: 'Failed to fetch overview data' });
     }
 };
 
-// Get category-wise spending across all users
+// ── GET /api/admin/reports/categories ────────────────────────────────────────
 export const getCategoryWiseSpending = async (req, res) => {
     try {
-        const pool = getDb();
+        const { data, error } = await supabase
+            .from('categories')
+            .select('id, name, expenses ( amount )');
 
-        const categoryDataResult = await pool.query(
-            `SELECT 
-        c.id AS categoryId,
-        c.name AS categoryName,
-        COALESCE(SUM(e.amount), 0) AS totalSpent
-       FROM categories c
-       LEFT JOIN expenses e ON e.category_id = c.id
-       GROUP BY c.id, c.name
-       ORDER BY totalSpent DESC, c.name ASC`
-        );
+        if (error) throw error;
 
-        const formattedData = categoryDataResult.rows.map((row) => ({
-            categoryId: row.categoryid,
-            categoryName: row.categoryname,
-            totalSpent: Number(row.totalspent || 0),
-        }));
+        const formattedData = (data ?? []).map((c) => ({
+            categoryId: c.id,
+            categoryName: c.name,
+            totalSpent: (c.expenses ?? []).reduce((s, e) => s + Number(e.amount), 0),
+        })).sort((a, b) => b.totalSpent - a.totalSpent);
 
         return res.json({ categories: formattedData });
     } catch (err) {
@@ -77,39 +60,30 @@ export const getCategoryWiseSpending = async (req, res) => {
     }
 };
 
-// Get top users by spending
+// ── GET /api/admin/reports/top-users ─────────────────────────────────────────
 export const getTopUsersBySpending = async (req, res) => {
     try {
-        const pool = getDb();
         const limit = parseInt(req.query.limit) || 5;
-
-        // Validate limit
         if (limit < 1 || limit > 50) {
             return res.status(400).json({ message: 'Limit must be between 1 and 50' });
         }
 
-        // Exclude admin users from rankings for accurate user analytics
-        const topUsersResult = await pool.query(
-            `SELECT 
-        u.id AS userId,
-        u.name,
-        u.email,
-        COALESCE(SUM(e.amount), 0) AS totalSpent
-       FROM users u
-       LEFT JOIN expenses e ON e.user_id = u.id
-       WHERE u.role = $1
-       GROUP BY u.id, u.name, u.email
-       ORDER BY totalSpent DESC
-       LIMIT $2`,
-            ['USER', limit]
-        );
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, name, email, expenses ( amount )')
+            .eq('role', 'USER');
 
-        const formattedData = topUsersResult.rows.map((row) => ({
-            userId: row.userid,
-            name: row.name,
-            email: row.email,
-            totalSpent: Number(row.totalspent || 0),
-        }));
+        if (error) throw error;
+
+        const formattedData = (data ?? [])
+            .map((u) => ({
+                userId: u.id,
+                name: u.name,
+                email: u.email,
+                totalSpent: (u.expenses ?? []).reduce((s, e) => s + Number(e.amount), 0),
+            }))
+            .sort((a, b) => b.totalSpent - a.totalSpent)
+            .slice(0, limit);
 
         return res.json({ users: formattedData });
     } catch (err) {

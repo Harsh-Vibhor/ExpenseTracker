@@ -90,10 +90,11 @@ export const removeUserExpense = async (req, res) => {
 export const createUserCategory = async (req, res) => {
   try {
     const { name } = req.body;
+    const userId = req.user.id;
     if (!name) {
       return res.status(400).json({ message: 'Name is required' });
     }
-    const category = await createCategory({ name });
+    const category = await createCategory({ name, userId });
     return res.status(201).json(category);
   } catch (err) {
     console.error('Create category error:', err);
@@ -103,7 +104,7 @@ export const createUserCategory = async (req, res) => {
 
 export const listUserCategories = async (req, res) => {
   try {
-    const categories = await getCategoriesByUser();
+    const categories = await getCategoriesByUser(req.user.id);
     return res.json(categories);
   } catch (err) {
     console.error('List categories error:', err);

@@ -1,53 +1,82 @@
-import { getDb } from '../config/db.js';
+import { supabase } from '../config/supabase.js';
 
+// ── GET /api/admin/expenses ───────────────────────────────────────────────────
 export const getAllExpensesAdmin = async (req, res) => {
   try {
-    const pool = getDb();
-    const result = await pool.query(
-      `SELECT e.*, u.name as user_name, c.name as category_name 
-       FROM expenses e 
-       LEFT JOIN users u ON e.user_id = u.id 
-       LEFT JOIN categories c ON e.category_id = c.id 
-       ORDER BY e.expense_date DESC`
-    );
-    return res.json(result.rows);
+    const { data, error } = await supabase
+      .from('expenses')
+      .select(`
+        id,
+        amount,
+        description,
+        date,
+        created_at,
+        user_id,
+        category_id,
+        users ( name ),
+        categories ( name )
+      `)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    const rows = data.map((e) => ({
+      id: e.id,
+      user_id: e.user_id,
+      category_id: e.category_id,
+      amount: e.amount,
+      description: e.description,
+      expense_date: e.date,
+      created_at: e.created_at,
+      user_name: e.users?.name ?? null,
+      category_name: e.categories?.name ?? null,
+    }));
+
+    return res.json(rows);
   } catch (err) {
     console.error('Admin get expenses error:', err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
+// ── GET /api/admin/users ──────────────────────────────────────────────────────
 export const getAllUsersAdmin = async (req, res) => {
   try {
-    const pool = getDb();
-    const result = await pool.query('SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC');
-    return res.json(result.rows);
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, email, role, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return res.json(data);
   } catch (err) {
     console.error('Admin get users error:', err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
+// ── GET /api/admin/summary ────────────────────────────────────────────────────
 export const getAdminSummary = async (req, res) => {
   try {
-    const pool = getDb();
+    const [usersRes, transactionsRes, amountRes] = await Promise.all([
+      supabase.from('users').select('id', { count: 'exact', head: true }),
+      supabase.from('expenses').select('id', { count: 'exact', head: true }),
+      supabase.from('expenses').select('amount'),
+    ]);
 
-    const usersResult = await pool.query(
-      'SELECT COUNT(*) AS totalUsers FROM users'
-    );
+    if (usersRes.error) throw usersRes.error;
+    if (transactionsRes.error) throw transactionsRes.error;
+    if (amountRes.error) throw amountRes.error;
 
-    const transactionsResult = await pool.query(
-      'SELECT COUNT(*) AS totalTransactions FROM expenses'
-    );
-
-    const amountResult = await pool.query(
-      'SELECT COALESCE(SUM(amount), 0) AS totalAmount FROM expenses'
+    const totalAmount = (amountRes.data ?? []).reduce(
+      (sum, row) => sum + Number(row.amount),
+      0
     );
 
     return res.json({
-      totalUsers: Number(usersResult.rows[0].totalusers),
-      totalTransactions: Number(transactionsResult.rows[0].totaltransactions),
-      totalAmount: Number(amountResult.rows[0].totalamount),
+      totalUsers: usersRes.count ?? 0,
+      totalTransactions: transactionsRes.count ?? 0,
+      totalAmount,
     });
   } catch (err) {
     console.error('Admin get summary error:', err);
@@ -55,126 +84,114 @@ export const getAdminSummary = async (req, res) => {
   }
 };
 
-
+// ── GET /api/admin/categories ─────────────────────────────────────────────────
 export const getAdminCategories = async (req, res) => {
   try {
-    const pool = getDb();
-    const result = await pool.query(
-      `SELECT 
-         c.id,
-         c.name,
-         COUNT(e.id) AS expense_count,
-         COALESCE(SUM(e.amount), 0) AS total_amount
-       FROM categories c
-       LEFT JOIN expenses e ON c.id = e.category_id
-       GROUP BY c.id, c.name
-       ORDER BY total_amount DESC`
-    );
+    // Fetch all categories with their expenses
+    const { data, error } = await supabase
+      .from('categories')
+      .select(`
+        id,
+        name,
+        expenses ( amount )
+      `)
+      .order('name', { ascending: true });
 
-    return res.json(result.rows);
+    if (error) throw error;
+
+    const rows = data.map((c) => {
+      const expenses = c.expenses ?? [];
+      const total_amount = expenses.reduce((s, e) => s + Number(e.amount), 0);
+      return {
+        id: c.id,
+        name: c.name,
+        expense_count: expenses.length,
+        total_amount,
+      };
+    });
+
+    // Sort by total_amount desc
+    rows.sort((a, b) => b.total_amount - a.total_amount);
+
+    return res.json(rows);
   } catch (err) {
     console.error('Admin get categories error:', err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-
-export const findCategoryById = async (categoryId) => {
-  const pool = getDb();
-  const result = await pool.query('SELECT * FROM categories WHERE id = $1 LIMIT 1', [categoryId]);
-  return result.rows[0] || null;
-};
-
-export const getAllCategories = async () => {
-  const pool = getDb();
-  const result = await pool.query('SELECT * FROM categories ORDER BY name');
-  return result.rows;
-};
-
-export const getAllUsers = async () => {
-  const pool = getDb();
-  const result = await pool.query('SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC');
-  return result.rows;
-};
-
-// Get all users for admin management
+// ── GET /api/admin/manage-users ───────────────────────────────────────────────
 export const getUsersForManagement = async (req, res) => {
   try {
-    const pool = getDb();
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        name,
+        email,
+        role,
+        created_at,
+        expenses ( amount )
+      `)
+      .neq('role', 'ADMIN')
+      .order('created_at', { ascending: false });
 
-    // Get all users except admins
-    const usersResult = await pool.query(
-      `SELECT 
-        u.id,
-        u.name,
-        u.email,
-        u.role,
-        u.created_at,
-        COUNT(e.id) AS expense_count,
-        COALESCE(SUM(e.amount), 0) AS total_spent
-       FROM users u
-       LEFT JOIN expenses e ON u.id = e.user_id
-       WHERE u.role != $1
-       GROUP BY u.id, u.name, u.email, u.role, u.created_at
-       ORDER BY u.created_at DESC`,
-      ['ADMIN']
-    );
+    if (error) throw error;
 
-    return res.json(usersResult.rows);
+    const rows = data.map((u) => {
+      const expenses = u.expenses ?? [];
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        created_at: u.created_at,
+        expense_count: expenses.length,
+        total_spent: expenses.reduce((s, e) => s + Number(e.amount), 0),
+      };
+    });
+
+    return res.json(rows);
   } catch (err) {
     console.error('Admin get users for management error:', err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Update user status (disabled for now - requires status column)
-export const updateUserStatus = async (req, res) => {
+// ── PUT /api/admin/users/:id/status ──────────────────────────────────────────
+export const updateUserStatus = async (_req, res) => {
   return res.status(501).json({ message: 'User status management not implemented yet' });
 };
 
-// Get user activity summary
+// ── GET /api/admin/users/:id/activity ────────────────────────────────────────
 export const getUserActivitySummary = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = getDb();
 
-    // Check if user exists
-    const userResult = await pool.query(
-      'SELECT id, name, email, role FROM users WHERE id = $1',
-      [id]
-    );
+    const { data: user, error: userErr } = await supabase
+      .from('users')
+      .select('id, name, email, role')
+      .eq('id', id)
+      .maybeSingle();
 
-    const user = userResult.rows[0];
+    if (userErr) throw userErr;
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const { data: expenses, error: expErr } = await supabase
+      .from('expenses')
+      .select('amount, date')
+      .eq('user_id', id);
 
-    // Get user's expense summary
-    const summaryResult = await pool.query(
-      `SELECT 
-        COUNT(*) AS total_expenses_count,
-        COALESCE(SUM(amount), 0) AS total_amount_spent,
-        MAX(expense_date) AS last_expense_date
-       FROM expenses
-       WHERE user_id = $1`,
-      [id]
-    );
+    if (expErr) throw expErr;
 
-    const summary = summaryResult.rows[0];
+    const total_expenses_count = expenses.length;
+    const total_amount_spent = expenses.reduce((s, e) => s + Number(e.amount), 0);
+    const dates = expenses.map((e) => e.date).filter(Boolean).sort();
+    const last_expense_date = dates.length ? dates[dates.length - 1] : null;
 
     return res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      activity: {
-        total_expenses_count: Number(summary.total_expenses_count || 0),
-        total_amount_spent: Number(summary.total_amount_spent || 0),
-        last_expense_date: summary.last_expense_date || null,
-      },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      activity: { total_expenses_count, total_amount_spent, last_expense_date },
     });
   } catch (err) {
     console.error('Admin get user activity summary error:', err);
@@ -182,44 +199,78 @@ export const getUserActivitySummary = async (req, res) => {
   }
 };
 
-// Get users by category (for drilldown)
+// ── GET /api/admin/categories/:categoryId/users ───────────────────────────────
 export const getUsersByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const pool = getDb();
 
-    // Verify category exists
-    const categoryResult = await pool.query(
-      'SELECT id, name FROM categories WHERE id = $1',
-      [categoryId]
-    );
+    const { data: category, error: catErr } = await supabase
+      .from('categories')
+      .select('id, name')
+      .eq('id', categoryId)
+      .maybeSingle();
 
-    if (categoryResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Category not found' });
+    if (catErr) throw catErr;
+    if (!category) return res.status(404).json({ message: 'Category not found' });
+
+    const { data: expenses, error: expErr } = await supabase
+      .from('expenses')
+      .select(`
+        amount,
+        users!inner ( id, name, email, role )
+      `)
+      .eq('category_id', categoryId)
+      .neq('users.role', 'ADMIN');
+
+    if (expErr) throw expErr;
+
+    // Aggregate per user
+    const userMap = new Map();
+    for (const e of expenses) {
+      const u = e.users;
+      if (!u) continue;
+      if (!userMap.has(u.id)) {
+        userMap.set(u.id, { id: u.id, name: u.name, email: u.email, expense_count: 0, total_spent: 0 });
+      }
+      const entry = userMap.get(u.id);
+      entry.expense_count += 1;
+      entry.total_spent += Number(e.amount);
     }
 
-    // Get users who have expenses in this category (excluding admins)
-    const usersResult = await pool.query(
-      `SELECT 
-        u.id,
-        u.name,
-        u.email,
-        COUNT(e.id) AS expense_count,
-        COALESCE(SUM(e.amount), 0) AS total_spent
-       FROM users u
-       INNER JOIN expenses e ON u.id = e.user_id
-       WHERE e.category_id = $1 AND u.role != $2
-       GROUP BY u.id, u.name, u.email
-       ORDER BY total_spent DESC`,
-      [categoryId, 'ADMIN']
-    );
+    const users = [...userMap.values()].sort((a, b) => b.total_spent - a.total_spent);
 
-    return res.json({
-      category: categoryResult.rows[0],
-      users: usersResult.rows,
-    });
+    return res.json({ category, users });
   } catch (err) {
     console.error('Admin get users by category error:', err);
     return res.status(500).json({ message: 'Failed to fetch users by category' });
   }
+};
+
+// ── Helper exports used by admin.reports.controller.js ───────────────────────
+export const findCategoryById = async (categoryId) => {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('id', categoryId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const getAllCategories = async () => {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+export const getAllUsers = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, email, role, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
 };
