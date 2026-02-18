@@ -120,31 +120,44 @@ export const getAdminCategories = async (req, res) => {
   }
 };
 
-// ── GET /api/admin/manage-users ───────────────────────────────────────────────
+// ── GET /api/admin/users/management ──────────────────────────────────────────
 export const getUsersForManagement = async (req, res) => {
   try {
-    const { data, error } = await supabase
+    // Try to select `status`. If the column doesn't exist yet (error 42703),
+    // fall back to a query without it and default status to 'ACTIVE'.
+    let data, error, hasStatusColumn = true;
+
+    ({ data, error } = await supabase
       .from('users')
-      .select(`
-        id,
-        name,
-        email,
-        role,
-        created_at,
-        expenses ( amount )
-      `)
+      .select('id, name, email, role, status, created_at, expenses ( amount )')
       .neq('role', 'ADMIN')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }));
 
-    if (error) throw error;
+    if (error && error.code === '42703') {
+      // `status` column does not exist yet — retry without it
+      hasStatusColumn = false;
+      console.warn('[getUsersForManagement] status column missing — run migration. Falling back.');
+      ({ data, error } = await supabase
+        .from('users')
+        .select('id, name, email, role, created_at, expenses ( amount )')
+        .neq('role', 'ADMIN')
+        .order('created_at', { ascending: false }));
+    }
 
-    const rows = data.map((u) => {
+    if (error) {
+      console.error('[getUsersForManagement] Supabase error:', { code: error.code, message: error.message });
+      throw error;
+    }
+
+    const rows = (data ?? []).map((u) => {
       const expenses = u.expenses ?? [];
       return {
         id: u.id,
         name: u.name,
         email: u.email,
         role: u.role,
+        // Default to 'ACTIVE' if column doesn't exist yet
+        status: hasStatusColumn ? (u.status ?? 'ACTIVE') : 'ACTIVE',
         created_at: u.created_at,
         expense_count: expenses.length,
         total_spent: expenses.reduce((s, e) => s + Number(e.amount), 0),
@@ -153,14 +166,58 @@ export const getUsersForManagement = async (req, res) => {
 
     return res.json(rows);
   } catch (err) {
-    console.error('Admin get users for management error:', err);
+    console.error('[getUsersForManagement] error:', { message: err.message, code: err.code });
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// ── PUT /api/admin/users/:id/status ──────────────────────────────────────────
-export const updateUserStatus = async (_req, res) => {
-  return res.status(501).json({ message: 'User status management not implemented yet' });
+// ── PATCH /api/admin/users/:id/status ────────────────────────────────────────
+export const updateUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['ACTIVE', 'BLOCKED'].includes(status)) {
+      return res.status(400).json({ message: 'status must be ACTIVE or BLOCKED' });
+    }
+
+    // Verify user exists and is not an admin
+    const { data: existing, error: fetchErr } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+    if (!existing) return res.status(404).json({ message: 'User not found' });
+    if (existing.role === 'ADMIN') {
+      return res.status(403).json({ message: 'Cannot change status of an admin user' });
+    }
+
+    // Update status — if the column doesn't exist yet, this will return a Supabase error
+    // with code 42703. In that case, run the SQL migration below.
+    const { data, error } = await supabase
+      .from('users')
+      .update({ status })
+      .eq('id', id)
+      .select('id, name, email, role, status')
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === '42703') {
+        // Column `status` doesn't exist in the table yet
+        return res.status(500).json({
+          message: 'status column missing — run migration: ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT \'ACTIVE\';',
+        });
+      }
+      throw error;
+    }
+
+    return res.json({ message: `User ${status === 'BLOCKED' ? 'blocked' : 'unblocked'} successfully`, user: data });
+  } catch (err) {
+    console.error('updateUserStatus error:', { message: err.message, code: err.code });
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 };
 
 // ── GET /api/admin/users/:id/activity ────────────────────────────────────────
@@ -199,7 +256,7 @@ export const getUserActivitySummary = async (req, res) => {
   }
 };
 
-// ── GET /api/admin/categories/:categoryId/users ───────────────────────────────
+// ── GET /api/admin/users/by-category/:categoryId ───────────────────────────
 export const getUsersByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -213,22 +270,21 @@ export const getUsersByCategory = async (req, res) => {
     if (catErr) throw catErr;
     if (!category) return res.status(404).json({ message: 'Category not found' });
 
+    // Fetch expenses with their user data.
+    // NOTE: PostgREST does NOT support .neq('users.role', ...) on joined tables —
+    // that filter is silently ignored. We filter admins out in JS instead.
     const { data: expenses, error: expErr } = await supabase
       .from('expenses')
-      .select(`
-        amount,
-        users!inner ( id, name, email, role )
-      `)
-      .eq('category_id', categoryId)
-      .neq('users.role', 'ADMIN');
+      .select('amount, users!inner ( id, name, email, role )')
+      .eq('category_id', categoryId);
 
     if (expErr) throw expErr;
 
-    // Aggregate per user
+    // Aggregate per user, excluding admins
     const userMap = new Map();
     for (const e of expenses) {
       const u = e.users;
-      if (!u) continue;
+      if (!u || u.role === 'ADMIN') continue;  // filter admins in JS
       if (!userMap.has(u.id)) {
         userMap.set(u.id, { id: u.id, name: u.name, email: u.email, expense_count: 0, total_spent: 0 });
       }
@@ -241,7 +297,7 @@ export const getUsersByCategory = async (req, res) => {
 
     return res.json({ category, users });
   } catch (err) {
-    console.error('Admin get users by category error:', err);
+    console.error('[getUsersByCategory] error:', { message: err.message, code: err.code });
     return res.status(500).json({ message: 'Failed to fetch users by category' });
   }
 };

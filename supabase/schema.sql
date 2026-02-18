@@ -16,10 +16,20 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'USER',
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
-    CONSTRAINT valid_role CHECK (role IN ('USER', 'ADMIN'))
+    CONSTRAINT valid_role CHECK (role IN ('USER', 'ADMIN')),
+    CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'BLOCKED'))
 );
+
+-- =====================================================
+-- MIGRATION: Add status column if table already exists
+-- Run this once in Supabase SQL Editor if the table
+-- was created without the status column.
+-- =====================================================
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'ACTIVE';
+-- ALTER TABLE users ADD CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'BLOCKED'));
 
 -- Index for faster email lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
