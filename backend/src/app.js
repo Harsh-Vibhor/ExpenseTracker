@@ -11,7 +11,15 @@ import reportRoutes from './routes/report.routes.js';
 
 const app = express();
 
-app.use(cors());
+// Allow requests from the deployed frontend (set FRONTEND_URL on Render).
+// Falls back to wildcard in development so local dev still works.
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/health', (req, res) => {

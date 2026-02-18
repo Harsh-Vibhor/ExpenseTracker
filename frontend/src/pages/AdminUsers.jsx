@@ -43,13 +43,13 @@ const AdminUsers = () => {
 
       let response;
       if (categoryId) {
-        // Fetch users filtered by category
+        // Fetch users filtered by category — returns { category, users: [] }
         response = await apiClient.get(`/admin/users/by-category/${categoryId}`);
         setUsers(response.data.users || []);
       } else {
-        // Fetch all users
+        // Fetch all users for management — returns a plain array
         response = await apiClient.get('/admin/users/management');
-        setUsers(response.data.users || []);
+        setUsers(Array.isArray(response.data) ? response.data : response.data.users || []);
       }
     } catch (err) {
       console.error('Failed to fetch users:', err);
